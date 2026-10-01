@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人工智慧與經濟研究專題 - 題目二分析網頁</title>
+    <!-- 引入 Chart.js 視覺化圖表庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        header {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .card {
+            background: #f8f9fa;
+            border-left: 4px solid #8e44ad;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #8e44ad;
+        }
+        .chart-box {
+            position: relative;
+            margin: 30px 0;
+            padding: 15px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .chart-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>淡江大學《人工智慧與經濟研究報告》專題</h1>
+        <div class="subtitle">研究領域：半導體出口與總體經濟 | 分析工具：Markov 區制轉換模型 & AREMOS 資料庫</div>
+    </header>
+
+    <!-- 題目二內容卡片 -->
+    <div class="card">
+        <h3>研究題目二：AI 浪潮下半導體出口對總體景氣之非線性效應研究</h3>
+        <p><strong>研究假說（Hypothesis）：</strong> 半導體出口對國內 GDP 與貨幣供給（M1B/M2）的帶動效應存在「區制轉換（Regime Switching）」與「非線性」特徵，在 AI 需求爆發期與平穩期的乘數效應有顯著差異。</p>
+        <p><strong>關鍵指標：</strong> 電子零組件出口額 (EX_ELEC)、M1B 貨幣供給額 (M1B)、加權股價指數 (TAIEX)、景氣對策信號分數 (IBT)。</p>
+    </div>
+
+    <!-- 圖表：Markov 區制轉換機率圖 -->
+    <div class="chart-box">
+        <div class="chart-title">圖 2：Markov-Switching 景氣高成長狀態過濾機率圖 (High Growth Regime Probability)</div>
+        <canvas id="regimeChart" height="130"></canvas>
+    </div>
+</div>
+
+<script>
+    // 1. 生成模擬時間序列數據 (2018-2026, 108個月)
+    const labels = [];
+    const regimeProb = [];
+
+    for (let i = 0; i < 108; i++) {
+        let year = 2018 + Math.floor(i / 12);
+        let month = (i % 12 + 1).toString().padStart(2, '0');
+        labels.push(`${year}-${month}`);
+
+        // 模擬半導體出口衝擊所驅動的 Markov 狀態機率 (0 ~ 1)
+        let prob = 0.05;
+        if (i >= 28 && i <= 42) {
+            // 2020-2021 疫情晶片荒高成長期
+            prob = 0.6 + Math.sin(i) * 0.25;
+        } else if (i >= 72) {
+            // 2024-2026 AI 狂潮持續高成長期
+            prob = 0.88 + Math.random() * 0.1;
+        } else {
+            // 平穩期/庫存調整期
+            prob = 0.05 + Math.random() * 0.15;
+        }
+        regimeProb.push(prob.toFixed(2));
+    }
+
+    // 2. 渲染【圖 2：Markov 區制轉換機率圖】
+    const ctx = document.getElementById('regimeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '高成長狀態機率 (High-Growth Probability)',
+                    data: regimeProb,
+                    borderColor: '#8e44ad',
+                    backgroundColor: 'rgba(142, 68, 173, 0.25)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    pointRadius: 0,
+                    tension: 0.2
+                },
+                {
+                    label: '區制臨界值 (Threshold = 0.5)',
+                    data: Array(108).fill(0.5),
+                    borderColor: '#e74c3c',
+                    borderDash: [4, 4],
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { ticks: { maxTicksLimit: 12 } },
+                y: {
+                    min: 0,
+                    max: 1.0,
+                    title: { display: true, text: '轉變為高成長狀態之機率 (Probability)' }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
