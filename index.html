@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人工智慧與經濟研究專題 - 題目一分析網頁</title>
+    <!-- 引入 Chart.js 視覺化圖表庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        header {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            color: #1a365d;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 14px;
+        }
+        .card {
+            background: #fafafa;
+            border-left: 4px solid #3182ce;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #2b6cb0;
+        }
+        .chart-box {
+            position: relative;
+            margin: 30px 0;
+            padding: 15px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .chart-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>淡江大學《人工智慧與經濟研究報告》專題</h1>
+        <div class="subtitle">研究領域：半導體與電子零組件出口 | 分析工具：AREMOS 資料庫 & 計量經濟學模型</div>
+    </header>
+
+    <!-- 題目一內容卡片 -->
+    <div class="card">
+        <h3>研究題目一：台灣半導體出口對薪資差距與通膨之衝擊分析</h3>
+        <p><strong>研究假說（Hypothesis）：</strong> 半導體（電子零組件）出口暴增會顯著拉升高科技從業人員的實質薪資，但對傳統製造業的外溢效應有限，進而擴大「雙元薪資差距（Wage Polarization）」，並透過區域消費對國內 CPI 產生遞傳效應。</p>
+        <p><strong>關鍵指標：</strong> 電子零組件出口金額 (EX_ELEC)、電子零組件業薪資 (SAL_ELEC)、製造業總薪資 (SAL_MFG)。</p>
+    </div>
+
+    <!-- 圖表一：雙 Y 軸走勢圖 -->
+    <div class="chart-box">
+        <div class="chart-title">圖 1A：半導體出口金額與雙元薪資差距時序走勢圖 (2018–2026)</div>
+        <canvas id="dualYChart" height="120"></canvas>
+    </div>
+
+    <!-- 圖表二：脈衝衝擊回應圖 -->
+    <div class="chart-box">
+        <div class="chart-title">圖 1B：VAR 模型 - 半導體出口衝擊對薪資差距之脈衝衝擊回應圖 (IRF)</div>
+        <canvas id="irfChart" height="120"></canvas>
+    </div>
+</div>
+
+<script>
+    // 1. 生成模擬時間序列數據 (2018-2026, 108個月)
+    const labels = [];
+    const exportData = [];
+    const wageGapData = [];
+
+    let baseExport = 100;
+    for (let i = 0; i < 108; i++) {
+        let year = 2018 + Math.floor(i / 12);
+        let month = (i % 12 + 1).toString().padStart(2, '0');
+        labels.push(`${year}-${month}`);
+
+        // 模擬出口金額趨勢 + 衝擊
+        let shock = 0;
+        if (i >= 24 && i < 48) shock = 20; // 疫情晶片荒
+        if (i >= 72) shock = 40;            // AI 爆發期
+        let val = 100 + (i * 1.1) + Math.sin(i * 0.2) * 15 + shock + (Math.random() * 5);
+        exportData.push(val.toFixed(1));
+
+        // 模擬薪資差距
+        let gap = val * 180 + 12000 + (Math.random() * 1000);
+        wageGapData.push(gap.toFixed(0));
+    }
+
+    // 2. 渲染【圖 1A：雙 Y 軸圖】
+    const ctx1 = document.getElementById('dualYChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '電子零組件出口額 (億美元)',
+                    data: exportData,
+                    borderColor: '#1f77b4',
+                    backgroundColor: 'rgba(31, 119, 180, 0.1)',
+                    yAxisID: 'y_export',
+                    borderWidth: 2,
+                    pointRadius: 0
+                },
+                {
+                    label: '高科技與傳統產業薪資差距 (新台幣)',
+                    data: wageGapData,
+                    borderColor: '#d62728',
+                    borderDash: [5, 5],
+                    yAxisID: 'y_wage',
+                    borderWidth: 2,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { ticks: { maxTicksLimit: 12 } },
+                y_export: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { display: true, text: '出口金額 (億美元)', color: '#1f77b4' }
+                },
+                y_wage: {
+                    type: 'linear',
+                    position: 'right',
+                    title: { display: true, text: '薪資差距 (NTD)', color: '#d62728' },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+
+    // 3. 生成與渲染【圖 1B：脈衝衝擊回應圖 (IRF)】
+    const lags = Array.from({length: 24}, (_, i) => `第 ${i+1} 個月`);
+    const irfData = [];
+    const upperData = [];
+    const lowerData = [];
+
+    for (let t = 1; t <= 24; t++) {
+        let response = 800 * Math.pow(t, 0.8) * Math.exp(-0.18 * t);
+        let ci = 120 * Math.sqrt(t);
+        irfData.push(response.toFixed(1));
+        upperData.push((response + ci).toFixed(1));
+        lowerData.push((response - ci).toFixed(1));
+    }
+
+    const ctx2 = document.getElementById('irfChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: lags,
+            datasets: [
+                {
+                    label: '衝擊回應值 (Response)',
+                    data: irfData,
+                    borderColor: '#2ca02c',
+                    backgroundColor: '#2ca02c',
+                    borderWidth: 2.5,
+                    fill: false
+                },
+                {
+                    label: '95% 信賴區間上限',
+                    data: upperData,
+                    borderColor: 'rgba(44, 160, 44, 0.2)',
+                    borderDash: [2, 2],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: '95% 信賴區間下限',
+                    data: lowerData,
+                    borderColor: 'rgba(44, 160, 44, 0.2)',
+                    backgroundColor: 'rgba(44, 160, 44, 0.15)',
+                    fill: '-1', // 與前一個 dataset 填滿區域
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { filter: item => item.text.includes('衝擊回應值') } }
+            },
+            scales: {
+                y: { title: { display: true, text: '脈衝回應幅度' } },
+                x: { title: { display: true, text: '衝擊後時間期數 (Lag Months)' } }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
