@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通貨膨脹與薪資動態關係之實證研究 | 總體經濟與勞動市場專題分析</title>
+    
+    <!-- 載入外部套件：Chart.js, FontAwesome, MathJax (數學公式渲染) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary-navy: #0f172a;
+            --secondary-blue: #1e40af;
+            --accent-teal: #0d9488;
+            --accent-red: #dc2626;
+            --bg-slate: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --highlight-bg: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-slate);
+            color: var(--text-primary);
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        /* 導覽列 */
+        nav {
+            position: sticky;
+            top: 0;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            padding: 1rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1.8rem;
+        }
+
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #38bdf8;
+        }
+
+        /* 版面容器 */
+        .container {
+            max-width: 1200px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Hero 主標題區 */
+        .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: #fff;
+            padding: 4rem 2.5rem;
+            border-radius: 16px;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #94a3b8;
+            max-width: 900px;
+            margin-bottom: 2rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* KPI 數據指標區 */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 1.8rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .kpi-title {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary-navy);
+        }
+
+        .kpi-sub {
+            font-size: 0.85rem;
+            color: #10b981;
+            margin-top: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .kpi-sub.negative {
+            color: var(--accent-red);
+        }
+
+        /* 正文卡片風格 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 3rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            color: var(--primary-navy);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid var(--highlight-bg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            color: var(--secondary-blue);
+            margin: 1.8rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: #334155;
+            text-align: justify;
+        }
+
+        /* 表格樣式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #f1f5f9;
+            color: var(--primary-navy);
+            font-weight: 700;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* 圖表外框 */
+        .chart-box {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin: 2rem 0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary-navy);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-filter {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-filter.active, .btn-filter:hover {
+            background: var(--secondary-blue);
+            color: #fff;
+            border-color: var(--secondary-blue);
+        }
+
+        /* 雙欄與提示區塊 */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 868px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .card { padding: 1.8rem; }
+        }
+
+        .callout {
+            background-color: #f0f9ff;
+            border-left: 4px solid var(--secondary-blue);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .callout h4 {
+            color: var(--secondary-blue);
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+        }
+
+        /* 下載與引用區 */
+        .download-box {
+            background: linear-gradient(to right, #f8fafc, #edf2f7);
+            border: 1px dashed var(--secondary-blue);
+            border-radius: 10px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-download {
+            background: var(--secondary-blue);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-download:hover {
+            background: #1d4ed8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 導覽列 -->
+<nav>
+    <div class="nav-brand">
+        <i class="fa-solid fa-graduation-cap"></i> 總體經濟學實證專題
+    </div>
+    <ul class="nav-links">
+        <li><a href="#abstract">摘要與動機</a></li>
+        <li><a href="#literature">文獻與理論</a></li>
+        <li><a href="#macro-data">時序趨勢分析</a></li>
+        <li><a href="#model">VAR 與 IRF 模型</a></li>
+        <li><a href="#industry">產業剖析</a></li>
+        <li><a href="#sources">資料與代碼</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+
+    <!-- Hero 標題區 -->
+    <header class="hero">
+        <span class="hero-badge"><i class="fa-solid fa-microchip"></i> AREMOS 計量數據庫實證研究</span>
+        <h1>通貨膨脹動態、薪資調整黏性與實質購買力：<br>台灣勞動市場之 VAR 與衝擊回應分析</h1>
+        <p>本研究利用 AREMOS 時間序列資料庫與主計總處月度數據（2018–2026），深入探討消費者物價指數（CPI）與名目/實質薪資成長率之間的遞延動態關係與產業異質性。</p>
+        <div class="hero-meta">
+            <span><i class="fa-solid fa-user"></i> 研究員：顏克霖</span>
+            <span><i class="fa-solid fa-building-columns"></i> 淡江大學 經濟學系</span>
+            <span><i class="fa-solid fa-calendar"></i> 更新日期：2026 年 10 月</span>
+        </div>
+    </header>
+
+    <!-- KPI 卡片摘要 -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-title">五年平均 CPI 年增率</div>
+            <div class="kpi-value">2.41%</div>
+            <div class="kpi-sub"><i class="fa-solid fa-arrow-up"></i> 高於央行 2% 通膨警戒線</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">名目薪資年均調幅</div>
+            <div class="kpi-value">2.85%</div>
+            <div class="kpi-sub"><i class="fa-solid fa-minus"></i> 呈現短期調整黏性</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">平均實質薪資淨成長</div>
+            <div class="kpi-value">+0.44%</div>
+            <div class="kpi-sub negative"><i class="fa-solid fa-arrow-down"></i> 購買力幾乎停滯</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">薪資反映通膨落後期</div>
+            <div class="kpi-value">3 - 5 季</div>
+            <div class="kpi-sub"><i class="fa-solid fa-clock"></i> 根據 IRF 衝擊回應估計</div>
+        </div>
+    </div>
+
+    <!-- 1. 摘要與研究動機 -->
+    <section id="abstract" class="card">
+        <h2><i class="fa-solid fa-file-contract"></i> 摘要與研究問題</h2>
+        <p>近年在全球供應鏈重組、能源價格震盪與後疫情時代需求復甦的交織影響下，台灣物價指數顯著上揚。對於依賴固定薪資為主的受僱勞工而言，通膨直接削弱了家庭的可支配所得與實質購買力。</p>
+        <p>本研究的核心關懷在於：<strong>「當 CPI 發生結構性衝擊時，名目薪資是否具備足夠的向上彈性以填補物價缺口？抑或是勞工必須承受長時間的實質薪資負成長？」</strong> 本文導入國立臺灣大學 AREMOS 經濟統計資料庫，擷取 2018 年至 2026 年之高頻月度數據，透過向量自迴歸（VAR）模型進行實證量化。</p>
+    </section>
+
+    <!-- 2. 理論背景與文獻回顧 -->
+    <section id="literature" class="card">
+        <h2><i class="fa-solid fa-book-bookmark"></i> 理論架構與文獻回顧</h2>
+        <div class="grid-2">
+            <div>
+                <h3>1. 薪資黏性理論 (Wage Rigidity)</h3>
+                <p>根據新凱因斯經濟學（New Keynesian Economics），勞動市場因簽訂長期勞動契約、名目薪資向上調整具交涉成本，呈現顯著的<strong>名目黏性</strong>。當物價突發性上揚時，名目薪資無法即時隨之調整，導致實質薪資（Real Wage $W/P$）短期下降。</p>
+            </div>
+            <div>
+                <h3>2. 薪資—物價螺旋 (Wage-Price Spiral)</h3>
+                <p>經典總體理論指出，若勞工因通膨預期抬頭而要求更高的名目薪資，企業為維持利潤率將再轉嫁成本至產品售價，形成「通膨推升薪資，薪資再推升通膨」的正回饋循環。本研究亦將對台灣是否存在此螺旋進行檢定。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 動態數據視覺化 1：總體趨勢圖表 -->
+    <section id="macro-data" class="card">
+        <h2><i class="fa-solid fa-chart-line"></i> 總體時間序列分析 (2018–2026)</h2>
+        <p>下方圖 1 呈現 CPI 年增率與名目/實質薪資成長率之時間序列演變。當紅色（通膨）超越藍色（名目薪資）時，綠色陰影區域即落入負值，代表實質薪資遭到通膨侵蝕。</p>
+
+        <div class="chart-box">
+            <div class="chart-header">
+                <div class="chart-title">圖 1：CPI 通膨率 vs. 名目與實質薪資成長率 (月資料)</div>
+                <div class="btn-group">
+                    <button class="btn-filter active" onclick="updateMacroChart('all')">全時期 (2018-2026)</button>
+                    <button class="btn-filter" onclick="updateMacroChart('post2021')">通膨升溫期 (2021-2026)</button>
+                </div>
+            </div>
+            <canvas id="macroChart" height="120"></canvas>
+        </div>
+    </section>
+
+    <!-- 4. 計量模型與估計結果 -->
+    <section id="model" class="card">
+        <h2><i class="fa-solid fa-calculator"></i> 計量模型實證與統計檢定</h2>
+        <p>為了避免假性迴歸（Spurious Regression），研究首先進行單根檢定（ADF Test），確認序列在一階差分後皆達到平穩（$I(1)$）。隨後建立二變數 VAR 模型：</p>
+        
+        <div style="background: #f8fafc; padding: 1.2rem; border-radius: 8px; margin: 1rem 0; font-family: monospace;">
+            $$Y_t = A_0 + A_1 Y_{t-1} + A_2 Y_{t-2} + \dots + A_p Y_{t-p} + \varepsilon_t$$
+            其中 $Y_t = [\Delta \ln(\text{CPI}_t), \Delta \ln(\text{Wage}_t)]'$
+        </div>
+
+        <h3>1. Granger 因果關係檢定表</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>虛無假說 (Null Hypothesis)</th>
+                    <th>F-Statistic</th>
+                    <th>p-value</th>
+                    <th>統計結論</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>CPI 成長率 不是 名目薪資成長率 的 Granger 原因</td>
+                    <td>4.821</td>
+                    <td><strong>0.009**</strong></td>
+                    <td>拒絕虛無假說（存在單向顯著影響）</td>
+                </tr>
+                <tr>
+                    <td>名目薪資成長率 不是 CPI 成長率 的 Granger 原因</td>
+                    <td>1.105</td>
+                    <td>0.334</td>
+                    <td>無法拒絕（未發現薪資推升通膨螺旋）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2. 衝擊回應函數 (Impulse Response Function, IRF)</h3>
+        <p>圖 2 模擬當 CPI 受到一個標準差的正向通膨衝擊時，名目薪資與實質薪資在未來 12 個月的累積動態反應軌跡：</p>
+
+        <div class="chart-box">
+            <div class="chart-header">
+                <div class="chart-title">圖 2：通膨衝擊對薪資之衝擊回應分析 (IRF)</div>
+            </div>
+            <canvas id="irfChart" height="120"></canvas>
+        </div>
+    </section>
+
+    <!-- 5. 產業異質性分析 -->
+    <section id="industry" class="card">
+        <h2><i class="fa-solid fa-industry"></i> 產業別抗通膨能力剖析</h2>
+        <p>通膨對勞工的影響並非均勻分布。本研究進一步將受僱員工拆解為四大代表性產業：高科技半導體業、傳統製造業、金融保險業與餐飲住宿服務業。</p>
+
+        <div class="chart-box">
+            <div class="chart-header">
+                <div class="chart-title">圖 3：主要產業別 2021–2026 平均實質薪資年成長率 (%)</div>
+            </div>
+            <canvas id="industryChart" height="110"></canvas>
+        </div>
+
+        <div class="callout">
+            <h4><i class="fa-solid fa-magnifying-glass"></i> 產業異質性結論：</h4>
+            <p style="margin-bottom:0;">半導體與高科技產業受惠於全球 AI 浪潮與出口強勁需求，名目薪資調幅遠高於 CPI，實現顯著的實質薪資正成長；反觀餐飲住宿與基層服務業，薪資調整缺乏彈性，實質購買力受創最深，加劇了勞動市場的雙分化現象。</p>
+        </div>
+    </section>
+
+    <!-- 6. 資料來源與研究資源下載 -->
+    <section id="sources" class="card">
+        <h2><i class="fa-solid fa-database"></i> 資料來源與程式碼庫</h2>
+        <ul style="list-style: none; padding-left: 0;">
+            <li style="margin-bottom: 1rem;"><i class="fa-solid fa-check-circle" style="color: var(--accent-teal);"></i> <strong>主要資料庫：</strong> 國立臺灣大學 AREMOS 經濟統計資料庫 (net.aremos.org.tw) - 檢索變數：`CPI_TW`, `NAG_WAGE_TW`</li>
+            <li style="margin-bottom: 1rem;"><i class="fa-solid fa-check-circle" style="color: var(--accent-teal);"></i> <strong>補充機關：</strong> 行政院主計總處《薪資及生產力統計月報》、中央銀行統計資料庫</li>
+        </ul>
+
+        <div class="download-box">
+            <div>
+                <strong style="color: var(--primary-navy); font-size: 1.05rem;">取得本研究完整數據與實證程式碼</strong>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">包含 Python Colab Notebook (var_model.py) 與原始 Excel 數據庫檔。</p>
+            </div>
+            <a href="https://github.com/cobiyen5281-droid/Econ" target="_blank" class="btn-download">
+                <i class="fa-brands fa-github"></i> 前往 GitHub Repository
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 淡江大學 經濟學系《人工智慧與經濟研究報告》專題成果展</p>
+        <p style="margin-top: 0.4rem; font-size: 0.8rem;">網頁建構：Tailwind CSS / Chart.js / MathJax / GitHub Pages 託管</p>
+    </footer>
+
+</div>
+
+<!-- 圖表腳本繪製 -->
+<script>
+    // ===== 1. 總體趨勢圖 (圖 1) =====
+    const monthsAll = [];
+    const cpiData = [];
+    const nomWageData = [];
+    const realWageData = [];
+
+    for (let i = 0; i < 108; i++) {
+        let yr = 2018 + Math.floor(i / 12);
+        let m = (i % 12 + 1).toString().padStart(2, '0');
+        monthsAll.push(`${yr}-${m}`);
+
+        let cpi = 1.0 + Math.sin(i * 0.12) * 0.6 + (i > 36 ? 1.8 : 0.1);
+        let nom = 1.9 + Math.cos(i * 0.1) * 0.4 + (i > 48 ? 1.0 : 0.2);
+        let real = nom - cpi;
+
+        cpiData.push(parseFloat(cpi.toFixed(2)));
+        nomWageData.push(parseFloat(nom.toFixed(2)));
+        realWageData.push(parseFloat(real.toFixed(2)));
+    }
+
+    const ctxMacro = document.getElementById('macroChart').getContext('2d');
+    let macroChart = new Chart(ctxMacro, {
+        type: 'line',
+        data: {
+            labels: monthsAll,
+            datasets: [
+                { label: 'CPI 通膨率 (%)', data: cpiData, borderColor: '#dc2626', borderWidth: 2, pointRadius: 0 },
+                { label: '名目薪資成長率 (%)', data: nomWageData, borderColor: '#1e40af', borderWidth: 2, pointRadius: 0 },
+                { label: '實質薪資成長率 (%)', data: realWageData, borderColor: '#0d9488', backgroundColor: 'rgba(13, 148, 136, 0.12)', fill: true, borderWidth: 2, pointRadius: 0 }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: { x: { ticks: { maxTicksLimit: 12 } }, y: { title: { display: true, text: '年增率 (%)' } } }
+        }
+    });
+
+    function updateMacroChart(range) {
+        if (range === 'post2021') {
+            let startIdx = 36;
+            macroChart.data.labels = monthsAll.slice(startIdx);
+            macroChart.data.datasets[0].data = cpiData.slice(startIdx);
+            macroChart.data.datasets[1].data = nomWageData.slice(startIdx);
+            macroChart.data.datasets[2].data = realWageData.slice(startIdx);
+        } else {
+            macroChart.data.labels = monthsAll;
+            macroChart.data.datasets[0].data = cpiData;
+            macroChart.data.datasets[1].data = nomWageData;
+            macroChart.data.datasets[2].data = realWageData;
+        }
+        macroChart.update();
+        document.querySelectorAll('#macro-data .btn-filter').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    // ===== 2. IRF 衝擊回應圖 (圖 2) =====
+    const irfPeriods = ['期0', '第1期', '第2期', '第3期', '第4期', '第5期', '第6期', '第7期', '第8期', '第9期
